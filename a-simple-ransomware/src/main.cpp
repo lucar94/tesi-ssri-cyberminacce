@@ -69,8 +69,7 @@ void processFilesInDirectory(const fs::path& directoryPath) {
 }
 
 int main() {
-    std::string directoryPath = "./Developer/Tesi/a-simple-ransomware/data"; // TODO: put the path of the directory you want to encrypt
-    // std::string directoryPath = "a/valid/path/goes/here"; 
+    std::string directoryPath = "a/valid/path/goes/here"; // TODO: put the path of the directory you want to encrypt
     processFilesInDirectory(directoryPath);
     return 0;
 }

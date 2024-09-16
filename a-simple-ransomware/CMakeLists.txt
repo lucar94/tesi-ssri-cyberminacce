@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
+set(VCPKG_TARGET_TRIPLET x64-windows-static)
+
 project(a_simple_ransomware)
 
 set(CMAKE_CXX_STANDARD 17)

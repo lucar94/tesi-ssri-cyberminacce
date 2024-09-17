@@ -23,6 +23,12 @@ public class Victim {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Column(name = "aes_key")
+    private String aesKey;
+
+    @Column(name = "aes_iv")
+    private String aesIv;
+
     private String os;
 
     @Column(name = "os_version")
@@ -36,6 +42,9 @@ public class Victim {
 
     @Column(name = "encrypted_folder")
     private String encryptedFolder;
+
+    @Column(name = "effective_encrypted_folder")
+    private String effectiveEncryptedFolder;
 
     @Column(name = "start_attack_date")
     private Instant startAttackDate;

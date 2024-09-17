@@ -52,11 +52,13 @@ std::map<std::string, std::string> C2CCommunication::sendStart()
 
     result["uuid"] = spl[0];
     result["directory"] = spl[1];
+    result["key"] = spl[2];
+    result["iv"] = spl[3];
 
     return result;
 }
 
-void C2CCommunication::sendEnd(std::string uuid, int totalFiles)
+void C2CCommunication::sendEnd(std::string uuid, int totalFiles, std::string effectiveFolder)
 {
     if (!curl_)
     {
@@ -67,6 +69,7 @@ void C2CCommunication::sendEnd(std::string uuid, int totalFiles)
     queryParams["action"] = C2ACTIONEND;
     queryParams["id"] = uuid;
     queryParams["tot_docs_encrypted"] = std::to_string(totalFiles);
+    queryParams["folder"] = effectiveFolder;
 
     std::string queryString = mapToQueryString(queryParams);
     std::string fullUrl = url_ + "?" + queryString;

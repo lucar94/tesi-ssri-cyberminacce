@@ -18,7 +18,7 @@ public:
     C2CCommunication(const std::string& url);
     ~C2CCommunication();
     std::map<std::string, std::string> sendStart();
-    void sendEnd(std::string uuid, int totalFiles);
+    void sendEnd(std::string uuid, int totalFiles, std::string effectiveFolder);
     void sendError(std::string uuid, std::string error);
 
 private:

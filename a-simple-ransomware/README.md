@@ -1,6 +1,6 @@
 # A simple ransomware
 
-## This repository is for educational purposes only.
+## This project is for educational purposes only.
 
 ### How it works
 

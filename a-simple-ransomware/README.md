@@ -1,16 +1,19 @@
 # A simple ransomware
 
-## This repository is for study purposes only.
+## This repository is for educational purposes only.
 
 ### How it works
 
-A small example of ransomware written in C++ that uses the AES-128 algorithm to encrypt all files in a specific folder.
-To test it, modify the `directoryPath` variable in the `main()` function, build the project, and run the generated executable.
+This is a small example of ransomware written in C++ that uses the AES-128 algorithm to encrypt all files in a specific folder. It communicates with a C2 server to retrieve the folder to encrypt, the encryption key, and the IV.
 
-In the data folder there are two plaintext files and their corresponding encrypted files to be used as examples.
+Create a new directory called `TestRW` under your user folder (e.g., `C:\Users\name on Windows`) and place some test files inside it. To test the ransomware, you must run the C2 remote server locally and update the `C2APIURL` in `main.cpp` to point to the correct local endpoint.
 
-**Warning:** The plaintext files are deleted, and only the encrypted files remain available. Both the encryption key and IV are set to 12345678123456781234567812345678.
+For more details on setting up the C2 server, please refer to the specific README included.
 
-### Decrypting test
+Build the ransomware using CMake and run the executable (called `a-simple-ransomware`).
 
-`openssl enc -aes-128-cbc -d -in DivinaCommedia.txt.enc -out DivinaCommedia.dec.txt -K 12345678123456781234567812345678  -iv 12345678123456781234567812345678`
+**Warning:** The plaintext will be deleted, and only the encrypted files will remain.
+
+### Decrypting
+
+Build the decryptor using CMake and run the executable. It will prompt you for the path to decrypt, the encryption key, and the IV.

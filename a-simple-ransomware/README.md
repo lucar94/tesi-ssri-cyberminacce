@@ -12,7 +12,7 @@ For more details on setting up the C2 server, please refer to the specific READM
 
 Build the ransomware using CMake and run the executable (called `a-simple-ransomware`).
 
-**Warning:** The plaintext will be deleted, and only the encrypted files will remain.
+**Warning:** The original files will be deleted, and only the encrypted files will remain.
 
 ### Decrypting
 

